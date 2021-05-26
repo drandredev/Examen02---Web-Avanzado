@@ -1,53 +1,125 @@
-const { MongoClient } = require("mongodb");
+const Express = require("express");
+const BodyParser = require("body-parser");
+const MongoClient = require("mongodb").MongoClient;
+const ObjectId = require("mongodb").ObjectID;
 
-// Replace the uri string with your MongoDB deployment's connection string.
-const uri =
-"mongodb+srv://drandredev:andre12@cluster0.bdv5z.mongodb.net/Examen2?retryWrites=true&w=majority"
 
-const client = new MongoClient(uri);
 
-async function run() {
-  try {
-    await client.connect();
 
-    const database = client.db("sample_mflix");
-    const theaters = database.collection("theaters");
 
-    const result = await theaters.bulkWrite([
-      { insertOne:
-        {
-          "document": {
-            location: {
-              address: { street1: '3 Main St.', city: 'Anchorage', state: 'AK', zipcode: '99501' },
-            }
-          }
+const CONNECTION_URL = "mongodb+srv://drandredev:andre12@cluster0.bdv5z.mongodb.net/Examen2?retryWrites=true&w=majority"
+const DATABASE_NAME = "Examen2";
+
+var app = Express();
+
+app.use(BodyParser.json());
+app.use(BodyParser.urlencoded({ extended: true }));
+
+var database, collectionentidades, collectioncuentascupo, collectionmovimientos ;
+
+app.listen(3000, () => {
+    MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true }, (error, client) => {
+        if(error) {
+            throw error;
         }
-      },
-      { insertOne:
-        {
-          "document": {
-            location: {
-              address: { street1: '75 Penn Plaza', city: 'New York', state: 'NY', zipcode: '10001' },
-            }
-          }
-        }
-      },
-      { updateMany:
-        {
-          "filter": { "location.address.zipcode" : "44011" },
-          "update": { $set : { "street2" : "25th Floor" } },
-          "upsert": true
-        }
-      },
-      { deleteOne :
-        { "filter" : { "location.address.street1" : "221b Baker St"} }
-      },
-    ]);
+        database = client.db(DATABASE_NAME);
+        collectionentidades = database.collection("entidades");
+        collectioncuentascupo = database.collection("cuentascupo");
+        collectionmovimientos = database.collection("movimientos");
+        console.log("Connected to `" + DATABASE_NAME + "`!");
+    });
+});
 
-    console.log(result);
+///////////////////  ENTIDADES /////////////////////////
 
-  } finally {
-    await client.close();
-  }
-}
-run().catch(console.dir);
+app.post("/entidades", (request, response) => {
+    collectionentidades.insert(request.body, (error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result.result);
+    });
+});
+
+app.get("/entidades", (request, response) => {
+    collectionentidades.find({}).toArray((error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result);
+    });
+});
+
+app.get("/entidades/:id", (request, response) => {
+    collectionentidades.findOne({ "_id": new ObjectId(request.params.id) }, (error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result);
+    });
+});
+
+///////////////////  CUENTAS CUPO /////////////////////////
+
+app.post("/cuentas", (request, response) => {
+    collectioncuentascupo.insert(request.body, (error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result.result);
+    });
+});
+
+app.get("/cuentas", (request, response) => {
+    collectioncuentascupo.find({}).toArray((error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result);
+    });
+});
+
+app.get("/cuentas/:id", (request, response) => {
+    collectioncuentascupo.findOne({ "_id": new ObjectId(request.params.id) }, (error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result);
+    });
+});
+
+
+////////////////// GRAPHQL ///////////////////////////
+
+
+app.post("/movimientos", (request, response) => {
+    collectionmovimientos.insert(request.body, (error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result.result);
+    });
+});
+
+app.get("/movimientos", (request, response) => {
+    collectionmovimientos.find({}).toArray((error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result);
+    });
+});
+
+app.get("/movimientos/:id", (request, response) => {
+    collectionmovimientos.findOne({ "_id": new ObjectId(request.params.id) }, (error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result);
+    });
+});
+
+
+
+
+  
